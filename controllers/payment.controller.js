@@ -93,13 +93,13 @@ class PaymentController {
   
         const foundOrder = await order.findOne({ invoiceId });
         if (!foundOrder) {
-          return res.status(404).json({ success: false, message: "Order not found." });
+          return res.status(405);
         }
   
         foundOrder.status = "completed";
         await foundOrder.save();
   
-        return res.status(200).json({ success: true, message: "Order updated." });
+        res.sendStatus(200);
       }
   
       if (event.type === "InvoiceExpired" || event.type === "InvoiceInvalid") {
@@ -111,10 +111,10 @@ class PaymentController {
           await foundOrder.save();
         }
   
-        return res.status(200).json({ success: true, message: "Order status expired or failed." })
+        return res.sendStatus(200);
       }
   
-      res.status(200).send("OK");
+      res.sendStatus(200);
     } catch (error) {
       console.error("Webhook error:", error);
       res.status(500).send("Error processing webhook");
