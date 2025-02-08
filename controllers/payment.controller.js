@@ -86,26 +86,22 @@ class PaymentController {
       const event = req.body;
       console.log("Webhook received:", event);
   
-      const invoiceId = event.id;
+      const invoiceId = event.invoiceId;
   
-      // Check if the event is an invoice being settled (paid)
       if (event.type === "InvoiceSettled") {
         console.log(`✅ Invoice ${invoiceId} was paid!`);
   
-        // Find the order in your database using invoiceId
         const foundOrder = await order.findOne({ invoiceId });
         if (!foundOrder) {
           return res.status(404).json({ success: false, message: "Order not found." });
         }
   
-        // Update order status to "completed"
         foundOrder.status = "completed";
         await foundOrder.save();
   
         return res.status(200).json({ success: true, message: "Order updated." });
       }
   
-      // Handle expired or failed invoices
       if (event.type === "InvoiceExpired" || event.type === "InvoiceInvalid") {
         console.log(`❌ Invoice ${invoiceId} expired or failed.`);
   
@@ -127,7 +123,7 @@ class PaymentController {
 
   async checkStatus(req, res, next) {
     try {
-      console.log(orderId)
+      const { orderId } = req.params;
       const foundOrder = await order.findOne({ orderId });
   
       if (!foundOrder) {
