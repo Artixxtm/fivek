@@ -45,8 +45,8 @@ class PaymentController {
       );
 
       if (response.status >= 200 && response.status < 300) {
-        const {checkoutLink, id: invoiceId} = response.data;
-        console.log(response.data)
+        const { checkoutLink, id: invoiceId } = response.data;
+        console.log(response.data);
 
         const foundUser = await user.findById(userId);
         if (!foundUser)
@@ -85,39 +85,37 @@ class PaymentController {
     try {
       const event = req.body;
       console.log("Webhook received:", event);
-  
+
       const invoiceId = event.invoiceId;
-  
+
       if (event.type === "InvoiceSettled") {
         console.log(`✅ Invoice ${invoiceId} was paid!`);
-  
+
         const foundOrder = await order.findOne({ invoiceId });
         if (!foundOrder) {
           return res.status(405);
         }
-  
+
         foundOrder.status = "completed";
         await foundOrder.save();
-  
-        res.sendStatus(200);
+
+        return res.sendStatus(200);
       }
-  
+
       if (event.type === "InvoiceExpired" || event.type === "InvoiceInvalid") {
         console.log(`❌ Invoice ${invoiceId} expired or failed.`);
-  
+
         const foundOrder = await order.findOne({ invoiceId });
         if (foundOrder) {
           foundOrder.status = "canceled";
           await foundOrder.save();
         }
-  
+
         return res.sendStatus(200);
       }
-  
-      res.sendStatus(200);
     } catch (error) {
       console.error("Webhook error:", error);
-      res.status(500).send("Error processing webhook");
+      if (!res.headersSent) res.status(500).send("Error processing webhook");
     }
   }
 
@@ -125,11 +123,13 @@ class PaymentController {
     try {
       const { orderId } = req.params;
       const foundOrder = await order.findOne({ orderId });
-  
+
       if (!foundOrder) {
-        return res.status(404).json({ success: false, message: "Order not found." });
+        return res
+          .status(404)
+          .json({ success: false, message: "Order not found." });
       }
-  
+
       return res.json({ success: true, status: foundOrder.status });
     } catch (error) {
       console.error("Error fetching order status:", error);
